@@ -5,4 +5,6 @@
     <string name="login_enter">Войти</string>
     <string name="login_register">Зарегистрироваться</string>
     <string name="login_input_error">Ошибка ввода данных</string>
+    <string name="profile_password">Пароль</string>
+    <string name="profile_email">Email</string>
 </resources>

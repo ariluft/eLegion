@@ -1,6 +1,6 @@
 package com.pkononov.elegion
 
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextUtils
@@ -10,6 +10,8 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.annotation.StringRes
+import androidx.appcompat.app.AppCompatActivity
+
 
 class AuthActivity : AppCompatActivity() {
 
@@ -21,7 +23,7 @@ class AuthActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.ac_auth)
+        setContentView(R.layout.activity_auth)
 
         buttonEnter = findViewById(R.id.buttonEnter)
         buttonRegister = findViewById(R.id.buttonRegister)
@@ -37,7 +39,15 @@ class AuthActivity : AppCompatActivity() {
         when (view.id) {
             R.id.buttonEnter-> {
                 if (isEmailValid(etLogin.text) && isPasswordValid(etPassword.text)) {
-                    //вход
+                    val startProfileIntent =
+                        Intent(this@AuthActivity, ProfileActivity::class.java)
+                    startProfileIntent.putExtra(ProfileActivity.USER_KEY,
+                        User(
+                            etLogin.text.toString(),
+                            etPassword.text.toString()
+                        )
+                    )
+                    startActivity(startProfileIntent)
                 }
                 else{
                     showMessage(R.string.login_input_error)
