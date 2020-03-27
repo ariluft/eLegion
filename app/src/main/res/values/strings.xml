@@ -7,4 +7,8 @@
     <string name="login_input_error">Ошибка ввода данных</string>
     <string name="profile_password">Пароль</string>
     <string name="profile_email">Email</string>
+    <string name="writePasswordAgain_hint">Введите пароль еще раз</string>
+    <string name="writePassword_hint">Введите пароль</string>
+    <string name="registration_input_success">Регистрация пройдена успешно</string>
+    <string name="registration_input_error">Login уже занят</string>
 </resources>

@@ -42,11 +42,8 @@ class AuthFragment : Fragment() {
     }
 
     companion object {
-        fun newInstance(): AuthFragment {
-            var bundleArgs = Bundle()
-            var fragment = AuthFragment()
-            fragment.arguments = bundleArgs
-            return fragment
+        fun newInstance(): AuthFragment  = AuthFragment().apply {
+            arguments = Bundle()
         }
     }
 
@@ -65,12 +62,16 @@ class AuthFragment : Fragment() {
                         )
                     )
                     startActivity(startProfileIntent)
+                    activity?.finish()
                 } else {
                     showMessage(R.string.login_input_error)
                 }
             }
             R.id.buttonRegister -> {
-                //регистрация
+                fragmentManager!!
+                    .beginTransaction()
+                    .replace(R.id.fragmentContainer, RegistrationFragment.newInstance())
+                    .commit();
             }
         }
     }
