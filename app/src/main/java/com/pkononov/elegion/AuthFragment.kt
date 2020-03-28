@@ -25,10 +25,11 @@ class AuthFragment : Fragment() {
 
     private lateinit var mLoginedUsersAdapter: ArrayAdapter<String>
 
-    private val loginFocusChangedListener = View.OnFocusChangeListener{ view: View, hasFocus: Boolean ->
-        if (hasFocus)
-            etLogin.showDropDown()
-    }
+    private val loginFocusChangedListener =
+        View.OnFocusChangeListener { view: View, hasFocus: Boolean ->
+            if (hasFocus)
+                etLogin.showDropDown()
+        }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,9 +48,10 @@ class AuthFragment : Fragment() {
         buttonEnter.setOnClickListener(onButtonClickListener)
         buttonRegister.setOnClickListener(onButtonClickListener)
 
-        mLoginedUsersAdapter = ArrayAdapter(view.context, android.R.layout.simple_dropdown_item_1line,
+        mLoginedUsersAdapter = ArrayAdapter(
+            view.context, android.R.layout.simple_dropdown_item_1line,
             sharedPreferencesHelper.getSuccessLogin()
-            )
+        )
 
         etLogin.setAdapter(mLoginedUsersAdapter)
         etLogin.onFocusChangeListener = loginFocusChangedListener
@@ -78,22 +80,14 @@ class AuthFragment : Fragment() {
     private fun login() {
         sharedPreferencesHelper.getUsers().forEach { user ->
             if (isEmailValid(etLogin.text) && isPasswordValid(etPassword.text)) {
-                if (sharedPreferencesHelper.login(
-                        User(
-                            etLogin.text.toString(),
-                            etPassword.text.toString()
-                        )
-                    )
-                ) {
+                val user: User? = sharedPreferencesHelper.login(
+                    etLogin.text.toString(),
+                    etPassword.text.toString()
+                )
+                if (user != null) {
                     val startProfileIntent =
                         Intent(activity, ProfileActivity::class.java)
-                    startProfileIntent.putExtra(
-                        ProfileActivity.USER_KEY,
-                        User(
-                            etLogin.text.toString(),
-                            etPassword.text.toString()
-                        )
-                    )
+                    startProfileIntent.putExtra(ProfileActivity.USER_KEY, user)
                     startActivity(startProfileIntent)
                     activity?.finish()
                 } else {

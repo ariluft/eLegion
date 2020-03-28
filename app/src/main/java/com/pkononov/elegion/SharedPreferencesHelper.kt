@@ -43,19 +43,19 @@ class SharedPreferencesHelper(context: Context) {
         return true
     }
 
-    fun login(user: User): Boolean {
+    fun login(login:String, password:String): User? {
         var users = getUsers()
         users.forEach {
-            if (user.login.toLowerCase() == it.login.toLowerCase() &&
-                user.password == it.password
+            if (login.toLowerCase() == it.login.toLowerCase() &&
+                password == it.password
             ) {
-                user.setHasSuccessLogin()
+                it.setHasSuccessLogin()
                 mSharedPreferences.edit().putString(USERS_KEY, mGson.toJson(users, USERS_TYPE))
                     .apply()
-                return true
+                return it
             }
         }
-        return false
+        return null
     }
 
     fun  getSuccessLogin(): Array<String> {
