@@ -49,6 +49,7 @@ class RegistrationFragment : Fragment() {
 
             if (isAdded){
                 showMessage(R.string.registration_input_success)
+                fragmentManager?.popBackStack()
             }
             else{
                 showMessage(R.string.registration_input_error)

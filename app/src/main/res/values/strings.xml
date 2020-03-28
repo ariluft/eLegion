@@ -11,4 +11,5 @@
     <string name="writePassword_hint">Введите пароль</string>
     <string name="registration_input_success">Регистрация пройдена успешно</string>
     <string name="registration_input_error">Login уже занят</string>
+    <string name="login_error">Ошибка логина. Неверный логин или пароль.</string>
 </resources>

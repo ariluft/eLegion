@@ -13,6 +13,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
+import java.util.*
 
 
 class AuthFragment : Fragment() {
@@ -23,6 +24,7 @@ class AuthFragment : Fragment() {
     private lateinit var etLogin: EditText
     private lateinit var etPassword: EditText
 
+    private lateinit var sharedPreferencesHelper: SharedPreferencesHelper
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -30,6 +32,8 @@ class AuthFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         var view = inflater.inflate(R.layout.fragment_auth, container, false)
+
+        sharedPreferencesHelper = SharedPreferencesHelper(view.context)
 
         buttonEnter = view.findViewById(R.id.buttonEnter)
         buttonRegister = view.findViewById(R.id.buttonRegister)
@@ -42,7 +46,7 @@ class AuthFragment : Fragment() {
     }
 
     companion object {
-        fun newInstance(): AuthFragment  = AuthFragment().apply {
+        fun newInstance(): AuthFragment = AuthFragment().apply {
             arguments = Bundle()
         }
     }
@@ -51,6 +55,24 @@ class AuthFragment : Fragment() {
     private val onButtonClickListener: View.OnClickListener = View.OnClickListener { view ->
         when (view.id) {
             R.id.buttonEnter -> {
+                login()
+            }
+            R.id.buttonRegister -> {
+                register()
+            }
+        }
+    }
+
+    private fun login() {
+        var isLoginSuccess = false
+
+        sharedPreferencesHelper.getUsers().forEach { user ->
+            if (user.login.toLowerCase() == etLogin.text.toString().toLowerCase() &&
+                user.password == etPassword.text.toString()
+            ) {
+
+                isLoginSuccess = true
+
                 if (isEmailValid(etLogin.text) && isPasswordValid(etPassword.text)) {
                     val startProfileIntent =
                         Intent(activity, ProfileActivity::class.java)
@@ -67,14 +89,21 @@ class AuthFragment : Fragment() {
                     showMessage(R.string.login_input_error)
                 }
             }
-            R.id.buttonRegister -> {
-                fragmentManager!!
-                    .beginTransaction()
-                    .replace(R.id.fragmentContainer, RegistrationFragment.newInstance())
-                    .commit();
-            }
+        }
+
+        if (!isLoginSuccess){
+            showMessage(R.string.login_error)
         }
     }
+
+    private fun register() {
+        fragmentManager!!
+            .beginTransaction()
+            .replace(R.id.fragmentContainer, RegistrationFragment.newInstance())
+            .addToBackStack(RegistrationFragment.javaClass.name)
+            .commit();
+    }
+
 
     private fun showMessage(@StringRes string: Int) {
         Toast.makeText(activity, string, Toast.LENGTH_LONG).show()

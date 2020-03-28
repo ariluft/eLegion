@@ -23,7 +23,7 @@ class SharedPreferencesHelper(context: Context) {
         val USERS_TYPE: Type = object : TypeToken<List<User>>() {}.type
     }
 
-    private fun getUsers(): ArrayList<User> {
+    fun getUsers(): ArrayList<User> {
         val users: ArrayList<User> =
             mGson.fromJson(mSharedPreferences.getString(USERS_KEY, ""), USERS_TYPE)
                 ?: return ArrayList()
