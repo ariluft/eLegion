@@ -1,6 +1,9 @@
 package com.pkononov.elegion
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
@@ -34,5 +37,21 @@ class ProfileActivity : AppCompatActivity() {
         mLogin.text = user.login
         mPassword.text = user.password
         mPhoto.setOnClickListener(mOnPhotoClickListener)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        var inflater = menuInflater
+        inflater.inflate(R.menu.profile_menu, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.actionLogout -> {
+                startActivity(Intent(this, AuthActivity::class.java))
+                finish()
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 }

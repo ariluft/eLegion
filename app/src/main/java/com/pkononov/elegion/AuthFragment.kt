@@ -8,12 +8,9 @@ import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Toast
+import android.widget.*
 import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
-import java.util.*
 
 
 class AuthFragment : Fragment() {
@@ -21,10 +18,17 @@ class AuthFragment : Fragment() {
     private lateinit var buttonEnter: Button
     private lateinit var buttonRegister: Button
 
-    private lateinit var etLogin: EditText
+    private lateinit var etLogin: AutoCompleteTextView
     private lateinit var etPassword: EditText
 
     private lateinit var sharedPreferencesHelper: SharedPreferencesHelper
+
+    private lateinit var mLoginedUsersAdapter: ArrayAdapter<String>
+
+    private val loginFocusChangedListener = View.OnFocusChangeListener{ view: View, hasFocus: Boolean ->
+        if (hasFocus)
+            etLogin.showDropDown()
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -42,6 +46,14 @@ class AuthFragment : Fragment() {
 
         buttonEnter.setOnClickListener(onButtonClickListener)
         buttonRegister.setOnClickListener(onButtonClickListener)
+
+        mLoginedUsersAdapter = ArrayAdapter(view.context, android.R.layout.simple_dropdown_item_1line,
+            sharedPreferencesHelper.getSuccessLogin()
+            )
+
+        etLogin.setAdapter(mLoginedUsersAdapter)
+        etLogin.onFocusChangeListener = loginFocusChangedListener
+
         return view
     }
 
@@ -64,16 +76,15 @@ class AuthFragment : Fragment() {
     }
 
     private fun login() {
-        var isLoginSuccess = false
-
         sharedPreferencesHelper.getUsers().forEach { user ->
-            if (user.login.toLowerCase() == etLogin.text.toString().toLowerCase() &&
-                user.password == etPassword.text.toString()
-            ) {
-
-                isLoginSuccess = true
-
-                if (isEmailValid(etLogin.text) && isPasswordValid(etPassword.text)) {
+            if (isEmailValid(etLogin.text) && isPasswordValid(etPassword.text)) {
+                if (sharedPreferencesHelper.login(
+                        User(
+                            etLogin.text.toString(),
+                            etPassword.text.toString()
+                        )
+                    )
+                ) {
                     val startProfileIntent =
                         Intent(activity, ProfileActivity::class.java)
                     startProfileIntent.putExtra(
@@ -86,13 +97,11 @@ class AuthFragment : Fragment() {
                     startActivity(startProfileIntent)
                     activity?.finish()
                 } else {
-                    showMessage(R.string.login_input_error)
+                    showMessage(R.string.login_error)
                 }
+            } else {
+                showMessage(R.string.login_input_error)
             }
-        }
-
-        if (!isLoginSuccess){
-            showMessage(R.string.login_error)
         }
     }
 
