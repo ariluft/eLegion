@@ -13,6 +13,14 @@
         android:hint="@string/profile_email"
         android:textSize="16dp" />
     <EditText
+        android:id="@+id/etName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:hint="@string/profile_name"
+        android:textSize="16dp" />
+    <EditText
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="16dp"

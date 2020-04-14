@@ -33,7 +33,7 @@ class SharedPreferencesHelper(context: Context) {
     fun addUser(user: User): Boolean {
         val users = getUsers()
         users.forEach {
-            if (it.login.toLowerCase(Locale.ROOT) == user.login.toLowerCase(Locale.ROOT)) {
+            if (it.email.toLowerCase(Locale.ROOT) == user.email.toLowerCase(Locale.ROOT)) {
                 return false
             }
         }
@@ -46,7 +46,7 @@ class SharedPreferencesHelper(context: Context) {
     fun login(login:String, password:String): User? {
         var users = getUsers()
         users.forEach {
-            if (login.toLowerCase() == it.login.toLowerCase() &&
+            if (login.toLowerCase() == it.email.toLowerCase() &&
                 password == it.password
             ) {
                 it.setHasSuccessLogin()
@@ -59,6 +59,6 @@ class SharedPreferencesHelper(context: Context) {
     }
 
     fun  getSuccessLogin(): Array<String> {
-        return getUsers().map { it.login }.toTypedArray()
+        return getUsers().map { it.email }.toTypedArray()
     }
 }

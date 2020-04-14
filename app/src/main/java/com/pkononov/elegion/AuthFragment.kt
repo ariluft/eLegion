@@ -2,6 +2,7 @@ package com.pkononov.elegion
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.text.Editable
 import android.text.TextUtils
 import android.util.Patterns
@@ -11,6 +12,11 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
+import com.google.gson.Gson
+import com.google.gson.JsonObject
+import com.pkononov.elegion.RegistrationFragment.Companion.JSON
+import okhttp3.*
+import okio.IOException
 
 
 class AuthFragment : Fragment() {
@@ -18,18 +24,8 @@ class AuthFragment : Fragment() {
     private lateinit var buttonEnter: Button
     private lateinit var buttonRegister: Button
 
-    private lateinit var etLogin: AutoCompleteTextView
+    private lateinit var etLogin: EditText
     private lateinit var etPassword: EditText
-
-    private lateinit var sharedPreferencesHelper: SharedPreferencesHelper
-
-    private lateinit var mLoginedUsersAdapter: ArrayAdapter<String>
-
-    private val loginFocusChangedListener =
-        View.OnFocusChangeListener { view: View, hasFocus: Boolean ->
-            if (hasFocus)
-                etLogin.showDropDown()
-        }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,7 +34,6 @@ class AuthFragment : Fragment() {
     ): View? {
         var view = inflater.inflate(R.layout.fragment_auth, container, false)
 
-        sharedPreferencesHelper = SharedPreferencesHelper(view.context)
 
         buttonEnter = view.findViewById(R.id.buttonEnter)
         buttonRegister = view.findViewById(R.id.buttonRegister)
@@ -48,13 +43,7 @@ class AuthFragment : Fragment() {
         buttonEnter.setOnClickListener(onButtonClickListener)
         buttonRegister.setOnClickListener(onButtonClickListener)
 
-        mLoginedUsersAdapter = ArrayAdapter(
-            view.context, android.R.layout.simple_dropdown_item_1line,
-            sharedPreferencesHelper.getSuccessLogin()
-        )
 
-        etLogin.setAdapter(mLoginedUsersAdapter)
-        etLogin.onFocusChangeListener = loginFocusChangedListener
 
         return view
     }
@@ -78,24 +67,63 @@ class AuthFragment : Fragment() {
     }
 
     private fun login() {
-        sharedPreferencesHelper.getUsers().forEach { user ->
-            if (isEmailValid(etLogin.text) && isPasswordValid(etPassword.text)) {
-                val user: User? = sharedPreferencesHelper.login(
-                    etLogin.text.toString(),
-                    etPassword.text.toString()
-                )
-                if (user != null) {
-                    val startProfileIntent =
-                        Intent(activity, ProfileActivity::class.java)
-                    startProfileIntent.putExtra(ProfileActivity.USER_KEY, user)
-                    startActivity(startProfileIntent)
-                    activity?.finish()
-                } else {
-                    showMessage(R.string.login_error)
+        if (isEmailValid(etLogin.text) && isPasswordValid(etPassword.text)) {
+
+            var request = Request.Builder()
+                .url(BuildConfig.SERVER_URL + "user/")
+                .build()
+
+            var client = ApiUtils.getBasicAuthClient(
+                etLogin.text.toString(),
+                etPassword.text.toString(),
+                true
+            )
+
+            client.newCall(request).enqueue(object : Callback {
+
+                var handler = Handler(activity!!.mainLooper)
+
+                override fun onFailure(call: Call, e: IOException) {
+                    handler.post(object : Runnable {
+                        override fun run() {
+                            showMessage(R.string.request_error)
+                        }
+
+                    })
                 }
-            } else {
-                showMessage(R.string.login_input_error)
-            }
+
+                override fun onResponse(call: Call, response: Response) {
+                    handler.post(object : Runnable {
+                        override fun run() {
+                            if (!response.isSuccessful) {
+                                showMessage(R.string.login_error)
+                            } else {
+                                try {
+                                    var gson = Gson()
+                                    var json: JsonObject = gson.fromJson(
+                                        response.body.toString(),
+                                        JsonObject::class.java
+                                    )
+                                    var user: User =
+                                        gson.fromJson(json.get("data"), User::class.java)
+
+                                    val startProfileIntent =
+                                        Intent(activity, ProfileActivity::class.java)
+                                    startProfileIntent.putExtra(ProfileActivity.USER_KEY, user)
+                                    startActivity(startProfileIntent)
+                                    activity?.finish()
+                                } catch (e: IOException) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+
+                    })
+                }
+            })
+
+        } else {
+            showMessage(R.string.login_input_error)
         }
     }
 

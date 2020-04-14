@@ -13,4 +13,8 @@
     <string name="registration_input_error">Login уже занят</string>
     <string name="login_error">Ошибка логина. Неверный логин или пароль.</string>
     <string name="logout">Logout</string>
+    <string name="profile_name">Имя</string>
+    <string name="request_error">Request error</string>
+    <string name="registration_error">Registration error</string>
+    <string name="registration_success">Registration success</string>
 </resources>

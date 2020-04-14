@@ -14,37 +14,22 @@ class ProfileActivity : AppCompatActivity() {
 
     companion object {
         val USER_KEY = "user_key"
-        val REQUEST_CODE_GET_PHOTO = 101
     }
 
-    private lateinit var mPhoto: ImageView;
     private lateinit var mLogin: TextView;
-    private lateinit var mPassword: TextView;
+    private lateinit var mName: TextView;
 
-    private val mOnPhotoClickListener =
-        View.OnClickListener {
-            openGalerry()
-        }
-
-    private fun openGalerry() {
-        var intent = Intent()
-        intent.setType("image/*")
-        intent.setAction(Intent.ACTION_GET_CONTENT)
-        startActivityForResult(intent, REQUEST_CODE_GET_PHOTO)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
 
-        mPhoto = findViewById(R.id.ivPhoto)
         mLogin = findViewById(R.id.tvEmail)
-        mPassword = findViewById(R.id.tvPassword)
+        mName = findViewById(R.id.tvName)
         val bundle = intent.extras
         val user: User = bundle!![USER_KEY] as User
-        mLogin.text = user.login
-        mPassword.text = user.password
-        mPhoto.setOnClickListener(mOnPhotoClickListener)
+        mLogin.text = user.email
+        mName.text = user.name
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -61,14 +46,5 @@ class ProfileActivity : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == REQUEST_CODE_GET_PHOTO && resultCode == Activity.RESULT_OK && data != null) {
-            var photoUri = data.data
-            mPhoto.setImageURI(photoUri)
-        } else {
-            super.onActivityResult(requestCode, resultCode, data)
-        }
     }
 }
