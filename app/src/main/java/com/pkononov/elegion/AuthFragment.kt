@@ -5,18 +5,22 @@ import android.os.Bundle
 import android.os.Handler
 import android.text.Editable
 import android.text.TextUtils
+import android.util.Base64
 import android.util.Patterns
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
-import com.google.gson.Gson
-import com.google.gson.JsonObject
-import com.pkononov.elegion.RegistrationFragment.Companion.JSON
-import okhttp3.*
-import okio.IOException
+import com.pkononov.elegion.model.OldUser
+import com.pkononov.elegion.model.User
+import com.pkononov.elegion.model.Users
+import retrofit2.Call
+import retrofit2.Response
+import java.io.UnsupportedEncodingException
 
 
 class AuthFragment : Fragment() {
@@ -32,8 +36,7 @@ class AuthFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        var view = inflater.inflate(R.layout.fragment_auth, container, false)
-
+        val view = inflater.inflate(R.layout.fragment_auth, container, false)
 
         buttonEnter = view.findViewById(R.id.buttonEnter)
         buttonRegister = view.findViewById(R.id.buttonRegister)
@@ -42,8 +45,6 @@ class AuthFragment : Fragment() {
 
         buttonEnter.setOnClickListener(onButtonClickListener)
         buttonRegister.setOnClickListener(onButtonClickListener)
-
-
 
         return view
     }
@@ -69,57 +70,46 @@ class AuthFragment : Fragment() {
     private fun login() {
         if (isEmailValid(etLogin.text) && isPasswordValid(etPassword.text)) {
 
-            var request = Request.Builder()
-                .url(BuildConfig.SERVER_URL + "user/")
-                .build()
 
-            var client = ApiUtils.getBasicAuthClient(
-                etLogin.text.toString(),
-                etPassword.text.toString(),
-                true
-            )
 
-            client.newCall(request).enqueue(object : Callback {
+            val login = etLogin.text.toString()
+            val password =  etPassword.text.toString()
+            var token = getAuthToken(login, password)
 
-                var handler = Handler(activity!!.mainLooper)
 
-                override fun onFailure(call: Call, e: IOException) {
-                    handler.post(object : Runnable {
-                        override fun run() {
-                            showMessage(R.string.request_error)
-                        }
 
-                    })
+            ApiUtils.getApi().authorization(token!!).enqueue(object : retrofit2.Callback<Users> {
+
+                val handler = Handler(activity!!.mainLooper)
+
+                override fun onFailure(call: Call<Users>, t: Throwable) {
+                    handler.post { showMessage(R.string.request_error) }
                 }
 
-                override fun onResponse(call: Call, response: Response) {
-                    handler.post(object : Runnable {
-                        override fun run() {
-                            if (!response.isSuccessful) {
-                                showMessage(R.string.login_error)
-                            } else {
-                                try {
-                                    var gson = Gson()
-                                    var json: JsonObject = gson.fromJson(
-                                        response.body.toString(),
-                                        JsonObject::class.java
-                                    )
-                                    var user: User =
-                                        gson.fromJson(json.get("data"), User::class.java)
-
-                                    val startProfileIntent =
-                                        Intent(activity, ProfileActivity::class.java)
-                                    startProfileIntent.putExtra(ProfileActivity.USER_KEY, user)
-                                    startActivity(startProfileIntent)
-                                    activity?.finish()
-                                } catch (e: IOException) {
-                                    e.printStackTrace()
-                                }
-                            }
-                        }
-
-                    })
+                override fun onResponse(call: Call<Users>, response: Response<Users>) {
+                   handler.post{
+                       if (!response.isSuccessful) {
+                           showMessage(R.string.login_error)
+                       }
+                       else{
+                           try {
+                               val user = OldUser(
+                                   response.body()!!.data.email,
+                                   response.body()!!.data.name,
+                                   ""
+                               )
+                               val intent =
+                                   Intent(activity, ProfileActivity::class.java)
+                               intent.putExtra(ProfileActivity.USER_KEY, user)
+                               startActivity(intent)
+                               activity!!.finish()
+                           } catch (e: Exception) {
+                               e.printStackTrace()
+                           }
+                       }
+                   }
                 }
+
             })
 
         } else {
@@ -131,12 +121,16 @@ class AuthFragment : Fragment() {
         fragmentManager!!
             .beginTransaction()
             .replace(R.id.fragmentContainer, RegistrationFragment.newInstance())
-            .addToBackStack(RegistrationFragment.javaClass.name)
+            .addToBackStack(RegistrationFragment::class.java.name)
             .commit();
     }
 
 
     private fun showMessage(@StringRes string: Int) {
+        Toast.makeText(activity, string, Toast.LENGTH_LONG).show()
+    }
+
+    private fun showMessage(string: String) {
         Toast.makeText(activity, string, Toast.LENGTH_LONG).show()
     }
 
@@ -147,5 +141,15 @@ class AuthFragment : Fragment() {
 
     private fun isPasswordValid(passwordText: Editable): Boolean {
         return !TextUtils.isEmpty(passwordText)
+    }
+
+    fun getAuthToken(email: String, password: String): String? {
+        var data = ByteArray(0)
+        try {
+            data = "$email:$password".toByteArray(charset("UTF-8"))
+        } catch (e: UnsupportedEncodingException) {
+            e.printStackTrace()
+        }
+        return "Basic " + Base64.encodeToString(data, Base64.NO_WRAP)
     }
 }

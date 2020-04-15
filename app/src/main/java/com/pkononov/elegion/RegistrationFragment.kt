@@ -12,10 +12,11 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
-import com.google.gson.Gson
+import com.pkononov.elegion.model.OldUser
+import com.pkononov.elegion.model.User
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okio.IOException
+import retrofit2.Callback
 
 class RegistrationFragment : Fragment() {
     private lateinit var mLogin: EditText
@@ -24,7 +25,6 @@ class RegistrationFragment : Fragment() {
     private lateinit var mPasswordAgain: EditText
     private lateinit var mRegistration: Button
 
-    private lateinit var mSharedPreferences: SharedPreferencesHelper
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,7 +33,6 @@ class RegistrationFragment : Fragment() {
     ): View? {
         var view = inflater.inflate(R.layout.registration_fragment, container, false)
 
-        mSharedPreferences = SharedPreferencesHelper(view.context)
 
         mLogin = view.findViewById(R.id.etLogin)
         mName = view.findViewById(R.id.etName)
@@ -47,63 +46,50 @@ class RegistrationFragment : Fragment() {
 
     companion object {
         fun newInstance() = RegistrationFragment()
-        val JSON : MediaType? = "application/json; charset=utf-8".toMediaTypeOrNull()
+        val JSON: MediaType? = "application/json; charset=utf-8".toMediaTypeOrNull()
     }
 
     private val mOnRegestrationClickListener = View.OnClickListener {
+
         if (isInputValid()) {
-            var user = User(mLogin.text.toString(), mName.text.toString(), mPassword.text.toString())
+            var user = OldUser(
+                mLogin.text.toString(),
+                mName.text.toString(),
+                mPassword.text.toString()
+            )
 
-            var request = Request.Builder()
-                .url(BuildConfig.SERVER_URL + "registration/")
-                .post(RequestBody.create(JSON, Gson().toJson(user)))
-                .build()
+            var handler = Handler(activity!!.mainLooper)
 
-            var client = OkHttpClient()
 
-            client.newCall(request).enqueue(object : Callback{
+            ApiUtils.getApi().registration(user).enqueue(object : Callback<Void> {
 
-                var handler = Handler(activity!!.mainLooper)
-
-                override fun onFailure(call: Call, e: IOException) {
-                    handler.post(object:Runnable{
-                        override fun run() {
-                            showMessage(R.string.request_error)
-                        }
-
-                    })
+                override fun onFailure(call: retrofit2.Call<Void>, t: Throwable) {
+                    handler.post { showMessage(R.string.request_error) }
                 }
 
-                override fun onResponse(call: Call, response: Response) {
-                    handler.post(object:Runnable{
-                        override fun run() {
-                            if (response.isSuccessful){
-                                //showMessage(R.string.registration_success)
-                                fragmentManager?.popBackStack()
-                            }
-                            else{
-                                //todo детальная обработка ошибок
-                                showMessage(R.string.request_error)
-                            }
+                override fun onResponse(
+                    call: retrofit2.Call<Void>,
+                    response: retrofit2.Response<Void>
+                ) {
+                    handler.post {
+                        if (response.isSuccessful) {
+                            showMessage(R.string.registration_success)
+                            fragmentManager?.popBackStack()
+                        } else {
+                            //todo детальная обработка ошибок
+                            showMessage(R.string.request_error)
                         }
-
-                    })
+                    }
                 }
             })
 
-            /*
-            if (isAdded) {
-                showMessage(R.string.registration_input_success)
-                fragmentManager?.popBackStack()
-            } else {
-                showMessage(R.string.registration_input_error)
-            }*/
         } else {
             showMessage(R.string.login_input_error)
         }
     }
 
-    private fun isInputValid() = isEmailValid(email = mLogin.text.toString()) && isPasswordValid() && isNameValid()
+    private fun isInputValid() =
+        isEmailValid(email = mLogin.text.toString()) && isPasswordValid() && isNameValid()
 
     private fun isEmailValid(email: String) =
         !TextUtils.isEmpty(email) && Patterns.EMAIL_ADDRESS.matcher(email).matches()
