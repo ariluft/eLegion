@@ -1,0 +1,35 @@
+package com.pkononov.elegion.albums
+
+import android.view.LayoutInflater
+import android.view.ViewGroup
+import androidx.recyclerview.widget.RecyclerView
+import com.pkononov.elegion.R
+import com.pkononov.elegion.model.Album
+
+class AlbumsAdapter : RecyclerView.Adapter<AlbumsHolder>() {
+    private val mAlbums:ArrayList<Album> = ArrayList()
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlbumsHolder {
+        var inflater = LayoutInflater.from(parent.context)
+        var view = inflater.inflate(R.layout.list_item_album, parent, false)
+        return AlbumsHolder(view)
+    }
+
+    override fun getItemCount(): Int {
+        return mAlbums.count()
+    }
+
+    override fun onBindViewHolder(holder: AlbumsHolder, position: Int) {
+        var album = mAlbums.get(position)
+        holder.bind(album)
+    }
+
+    fun addData(data:List<Album>, isRefreshed:Boolean){
+        if (isRefreshed){
+            mAlbums.clear()
+        }
+
+        mAlbums.addAll(data)
+        notifyDataSetChanged()
+    }
+}

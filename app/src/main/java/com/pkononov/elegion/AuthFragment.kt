@@ -15,8 +15,7 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
-import com.pkononov.elegion.model.OldUser
-import com.pkononov.elegion.model.User
+import com.pkononov.elegion.albums.AlbumsActivity
 import com.pkononov.elegion.model.Users
 import retrofit2.Call
 import retrofit2.Response
@@ -46,6 +45,9 @@ class AuthFragment : Fragment() {
         buttonEnter.setOnClickListener(onButtonClickListener)
         buttonRegister.setOnClickListener(onButtonClickListener)
 
+
+
+
         return view
     }
 
@@ -69,16 +71,9 @@ class AuthFragment : Fragment() {
 
     private fun login() {
         if (isEmailValid(etLogin.text) && isPasswordValid(etPassword.text)) {
-
-
-
             val login = etLogin.text.toString()
             val password =  etPassword.text.toString()
-            var token = getAuthToken(login, password)
-
-
-
-            ApiUtils.getApi().authorization(token!!).enqueue(object : retrofit2.Callback<Users> {
+            ApiUtils.getAutorizationApi(login, password).authorization().enqueue(object : retrofit2.Callback<Users> {
 
                 val handler = Handler(activity!!.mainLooper)
 
@@ -93,16 +88,16 @@ class AuthFragment : Fragment() {
                        }
                        else{
                            try {
-                               val user = OldUser(
+                              /* val user = OldUser(
                                    response.body()!!.data.email,
                                    response.body()!!.data.name,
                                    ""
                                )
-                               val intent =
+                              val intent =
                                    Intent(activity, ProfileActivity::class.java)
-                               intent.putExtra(ProfileActivity.USER_KEY, user)
-                               startActivity(intent)
-                               activity!!.finish()
+                               intent.putExtra(ProfileActivity.USER_KEY, user)*/
+                               startActivity(Intent(activity, AlbumsActivity::class.java))
+                               activity?.finish()
                            } catch (e: Exception) {
                                e.printStackTrace()
                            }

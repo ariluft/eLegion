@@ -26,12 +26,14 @@ class ApiUtils {
                 builder.authenticator(object : Authenticator {
                     override fun authenticate(route: Route?, response: Response): Request? {
                         val credentials = Credentials.basic(email, password)
-                        return response.request.newBuilder().header("Autorization", credentials)
+                        return response.request.newBuilder().header("Authorization", credentials)
                             .build()
                     }
                 })
 
-                builder.addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+                if (!BuildConfig.BUILD_TYPE.contains("release")) {
+                    builder.addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY))
+                }
                 okHttpClient = builder.build()
             }
 
@@ -53,6 +55,30 @@ class ApiUtils {
             }
 
             return retrofit!!
+        }
+
+        fun getRetrofitAutorization(email: String, password: String): Retrofit {
+            if (gson == null) {
+                gson = Gson()
+            }
+
+            if (retrofit == null) {
+                retrofit = Retrofit.Builder()
+                    .baseUrl(BuildConfig.SERVER_URL)
+                    //need for interceptors
+                    .client(getBasicAuthClient(email, password, true))
+                    .addConverterFactory(GsonConverterFactory.create(gson!!))
+                    .build()
+            }
+
+            return retrofit!!
+        }
+
+        fun getAutorizationApi(email: String, password: String):AcademyApi{
+            if (api == null){
+                api = getRetrofitAutorization(email, password).create(AcademyApi::class.java)
+            }
+            return api!!
         }
 
         fun getApi():AcademyApi{

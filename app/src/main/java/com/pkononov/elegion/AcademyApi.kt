@@ -21,5 +21,5 @@ interface AcademyApi {
     fun getSong(@Path("id") id:Int): Call<Song>
 
     @GET("user")
-    fun authorization(@Header("Authorization") header:String):Call<Users>
+    fun authorization() :Call<Users>
 }

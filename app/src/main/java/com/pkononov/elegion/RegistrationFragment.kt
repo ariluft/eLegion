@@ -13,7 +13,6 @@ import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
 import com.pkononov.elegion.model.OldUser
-import com.pkononov.elegion.model.User
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import retrofit2.Callback
