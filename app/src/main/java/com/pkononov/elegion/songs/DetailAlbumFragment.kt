@@ -1,47 +1,41 @@
-package com.pkononov.elegion.albums
+package com.pkononov.elegion.songs
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.pkononov.elegion.ApiUtils
 import com.pkononov.elegion.R
-import com.pkononov.elegion.albums.AlbumsAdapter.OnItemClickListener
 import com.pkononov.elegion.model.Album
-import com.pkononov.elegion.model.Albums
-import com.pkononov.elegion.songs.DetailAlbumFragment
+import com.pkononov.elegion.model.Songs
 import retrofit2.Call
 import retrofit2.Response
 
-class AlbumsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
-
-    private var onItemClickListener = object : OnItemClickListener {
-        override fun onItemClick(album: Album.Companion.DataBean) {
-            fragmentManager!!.beginTransaction()
-                .replace(R.id.fragmentContainer,
-                    DetailAlbumFragment.newInstance(album)
-                )
-                .addToBackStack(DetailAlbumFragment::class.java.simpleName)
-                .commit()
-        }
-    }
-
-    private val mAlbumAdapter = AlbumsAdapter(onItemClickListener)
-
-
-
+class DetailAlbumFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
     private lateinit var mRecycleView : RecyclerView
 
     private lateinit var mRefresher : SwipeRefreshLayout
     private lateinit var mErrorView : View
 
+    private lateinit var mAlbum : Album.Companion.DataBean
+
+    private val mSongAdapter = SongsAdapter()
+
     companion object{
-        fun newInstance(): AlbumsFragment = AlbumsFragment()
+        val ALBUM_KEY : String = "ALBUM_KEY"
+        fun newInstance(album:Album.Companion.DataBean): DetailAlbumFragment{
+            var args = Bundle()
+            args.putSerializable(ALBUM_KEY, album)
+
+            var fragment = DetailAlbumFragment()
+            fragment.arguments = args
+
+            return fragment
+        }
     }
 
     override fun onCreateView(
@@ -61,9 +55,12 @@ class AlbumsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        activity!!.setTitle(R.string.albums)
+
+        mAlbum = arguments!!.getSerializable(ALBUM_KEY) as Album.Companion.DataBean
+        activity!!.title = mAlbum.name
+
         mRecycleView.layoutManager = LinearLayoutManager(activity)
-        mRecycleView.adapter = mAlbumAdapter
+        mRecycleView.adapter = mSongAdapter
 
         onRefresh()
     }
@@ -71,25 +68,25 @@ class AlbumsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
     override fun onRefresh() {
         mRefresher.post{
             mRefresher.isRefreshing = true
-            getAlbums()
+            getAlbum()
         }
     }
 
-    private fun getAlbums(){
-        ApiUtils.getApi().getAlbums().enqueue(object : retrofit2.Callback<Albums>{
-            override fun onFailure(call: Call<Albums>, t: Throwable) {
+    private fun getAlbum(){
+        ApiUtils.getApi().getAlbum(mAlbum.id).enqueue(object : retrofit2.Callback<Album>{
+            override fun onFailure(call: Call<Album>, t: Throwable) {
                 mRecycleView.visibility = View.GONE
                 mErrorView.visibility = View.VISIBLE
 
                 mRefresher.isRefreshing = false
             }
 
-            override fun onResponse(call: Call<Albums>, response: Response<Albums>) {
+            override fun onResponse(call: Call<Album>, response: Response<Album>) {
                 if (response.isSuccessful){
                     mRecycleView.visibility = View.VISIBLE
                     mErrorView.visibility = View.GONE
 
-                    mAlbumAdapter.addData(response.body()!!.data, true)
+                    mSongAdapter.addData(response.body()!!.mData.songs, true)
                 }else{
                     mRecycleView.visibility = View.GONE
                     mErrorView.visibility = View.VISIBLE

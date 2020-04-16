@@ -17,4 +17,5 @@
     <string name="request_error">Request error</string>
     <string name="registration_error">Registration error</string>
     <string name="registration_success">Registration success</string>
+    <string name="albums">Альбомы</string>
 </resources>

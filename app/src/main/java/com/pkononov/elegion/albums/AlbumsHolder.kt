@@ -10,8 +10,11 @@ class AlbumsHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     private var mTitle: TextView = itemView.findViewById(R.id.tv_title)
     private var mReleaseDate: TextView = itemView.findViewById(R.id.tv_release_date)
 
-    fun bind(item: Album){
-        mTitle.setText(item.name)
-        mReleaseDate.setText(item.release_date)
+    fun bind(item: Album.Companion.DataBean, onItemClickListener:AlbumsAdapter.OnItemClickListener){
+        mTitle.text = item.name
+        mReleaseDate.text = item.release_date
+        itemView.setOnClickListener{
+            onItemClickListener.onItemClick(item)
+        }
     }
 }

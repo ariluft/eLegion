@@ -4,6 +4,6 @@ import com.google.gson.annotations.SerializedName
 
 class Albums(
     @SerializedName("data")
-    val data: List<Album>
+    val data: List<Album.Companion.DataBean>
 )
 
