@@ -13,6 +13,7 @@ abstract class SingleFragmentActivity : AppCompatActivity(){
             var fragmentManager = supportFragmentManager
             fragmentManager.beginTransaction()
                 .replace(R.id.fragmentContainer, getFragment())
+                .addToBackStack(getFragment().javaClass.simpleName)
                 .commit()
         }
     }
