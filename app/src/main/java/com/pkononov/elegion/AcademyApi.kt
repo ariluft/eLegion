@@ -15,7 +15,7 @@ interface AcademyApi {
     fun getAlbums(): Single<Albums>
 
     @GET("albums/{id}")
-    fun getAlbum(@Path("id") id:Int): Call<Album>
+    fun getAlbum(@Path("id") id:Int): Single<Album>
 
     @GET("songs")
     fun getSongs(): Call<Songs>
