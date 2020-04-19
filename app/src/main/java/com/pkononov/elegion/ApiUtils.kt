@@ -69,7 +69,7 @@ class ApiUtils {
                 //need for interceptors
                 .client(getBasicAuthClient(email, password, true))
                 .addConverterFactory(GsonConverterFactory.create(gson!!))
-                //.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .build()
 
             return retrofit!!

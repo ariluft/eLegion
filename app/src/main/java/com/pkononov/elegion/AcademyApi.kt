@@ -23,5 +23,5 @@ interface AcademyApi {
     fun getSong(@Path("id") id:Int): Call<Song>
 
     @GET("user")
-    fun authorization() :Call<Users>
+    fun authorization() :Observable<Users>
 }

@@ -1,5 +1,6 @@
 package com.pkononov.elegion
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -17,6 +18,8 @@ import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
 import com.pkononov.elegion.albums.AlbumsActivity
 import com.pkononov.elegion.model.Users
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
 import retrofit2.Call
 import retrofit2.Response
 import java.io.UnsupportedEncodingException
@@ -70,39 +73,25 @@ class AuthFragment : Fragment() {
         }
     }
 
+    @SuppressLint("CheckResult")
     private fun login() {
         if (isEmailValid(etLogin.text) && isPasswordValid(etPassword.text)) {
             val login = etLogin.text.toString()
             val password = etPassword.text.toString()
-            ApiUtils.getAutorizationApi(login, password).authorization()
-                .enqueue(object : retrofit2.Callback<Users> {
-
-                    val handler = Handler(activity!!.mainLooper)
-
-                    override fun onFailure(call: Call<Users>, t: Throwable) {
-                        handler.post {
-                            showMessage(t.message.toString())
-                        }
-
+            ApiUtils.getAutorizationApi(login, password)
+                .authorization()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    try {
+                        startActivity(Intent(activity, AlbumsActivity::class.java))
+                        activity?.finish()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-
-                    override fun onResponse(call: Call<Users>, response: Response<Users>) {
-                        handler.post {
-                            if (!response.isSuccessful) {
-                                showMessage("Код ошибки ${response.code()}, Ошибка ${response.message()}")
-                            } else {
-                                try {
-                                    startActivity(Intent(activity, AlbumsActivity::class.java))
-                                    activity?.finish()
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                }
-                            }
-                        }
-                    }
-
+                }, {
+                    showMessage(it.toString())
                 })
-
         } else {
             showMessage(R.string.login_input_error)
         }
@@ -126,12 +115,12 @@ class AuthFragment : Fragment() {
     }
 
     private fun isEmailValid(loginText: Editable): Boolean {
-        if (TextUtils.isEmpty(loginText)){
+        if (TextUtils.isEmpty(loginText)) {
             etLogin.setError("Пустое поле")
             return false
         }
 
-        if (!Patterns.EMAIL_ADDRESS.matcher(loginText).matches()){
+        if (!Patterns.EMAIL_ADDRESS.matcher(loginText).matches()) {
             etLogin.setError("Email некорректный")
             return false
         }
@@ -140,7 +129,7 @@ class AuthFragment : Fragment() {
     }
 
     private fun isPasswordValid(passwordText: Editable): Boolean {
-        if (TextUtils.isEmpty(passwordText)){
+        if (TextUtils.isEmpty(passwordText)) {
             etPassword.setError("Пустое поле")
         }
 
