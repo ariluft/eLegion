@@ -1,5 +1,6 @@
 package com.pkononov.elegion.albums
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -15,6 +16,9 @@ import com.pkononov.elegion.albums.AlbumsAdapter.OnItemClickListener
 import com.pkononov.elegion.model.Album
 import com.pkononov.elegion.model.Albums
 import com.pkononov.elegion.songs.DetailAlbumFragment
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import retrofit2.Call
 import retrofit2.Response
 
@@ -23,7 +27,8 @@ class AlbumsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
     private var onItemClickListener = object : OnItemClickListener {
         override fun onItemClick(album: Album.Companion.DataBean) {
             fragmentManager!!.beginTransaction()
-                .replace(R.id.fragmentContainer,
+                .replace(
+                    R.id.fragmentContainer,
                     DetailAlbumFragment.newInstance(album)
                 )
                 .addToBackStack(DetailAlbumFragment::class.java.simpleName)
@@ -34,13 +39,12 @@ class AlbumsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
     private val mAlbumAdapter = AlbumsAdapter(onItemClickListener)
 
 
+    private lateinit var mRecycleView: RecyclerView
 
-    private lateinit var mRecycleView : RecyclerView
+    private lateinit var mRefresher: SwipeRefreshLayout
+    private lateinit var mErrorView: View
 
-    private lateinit var mRefresher : SwipeRefreshLayout
-    private lateinit var mErrorView : View
-
-    companion object{
+    companion object {
         fun newInstance(): AlbumsFragment = AlbumsFragment()
     }
 
@@ -55,7 +59,7 @@ class AlbumsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         mRecycleView = view.findViewById(R.id.recycler)
         mRefresher = view.findViewById(R.id.refresher)
-        mRefresher.setOnRefreshListener (this)
+        mRefresher.setOnRefreshListener(this)
         mErrorView = view.findViewById(R.id.errorView)
     }
 
@@ -69,34 +73,32 @@ class AlbumsFragment : Fragment(), SwipeRefreshLayout.OnRefreshListener {
     }
 
     override fun onRefresh() {
-        mRefresher.post{
+        mRefresher.post {
             mRefresher.isRefreshing = true
             getAlbums()
         }
     }
 
-    private fun getAlbums(){
-        ApiUtils.getApi().getAlbums().enqueue(object : retrofit2.Callback<Albums>{
-            override fun onFailure(call: Call<Albums>, t: Throwable) {
+    @SuppressLint("CheckResult")
+    private fun getAlbums() {
+        ApiUtils.getApi()
+            .getAlbums()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnSubscribe {
+                mRefresher.isRefreshing = false
+            }
+            .doFinally {
+                mRefresher.isRefreshing = false
+            }
+            .subscribe({
+                mRecycleView.visibility = View.VISIBLE
+                mErrorView.visibility = View.GONE
+
+                mAlbumAdapter.addData(it.data, true)
+            }, {
                 mRecycleView.visibility = View.GONE
                 mErrorView.visibility = View.VISIBLE
-
-                mRefresher.isRefreshing = false
-            }
-
-            override fun onResponse(call: Call<Albums>, response: Response<Albums>) {
-                if (response.isSuccessful){
-                    mRecycleView.visibility = View.VISIBLE
-                    mErrorView.visibility = View.GONE
-
-                    mAlbumAdapter.addData(response.body()!!.data, true)
-                }else{
-                    mRecycleView.visibility = View.GONE
-                    mErrorView.visibility = View.VISIBLE
-                }
-
-                mRefresher.isRefreshing = false
-            }
-        })
+            })
     }
 }
