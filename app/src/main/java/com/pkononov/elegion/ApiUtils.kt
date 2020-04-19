@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import okhttp3.*
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
 
 class ApiUtils {
@@ -51,38 +52,36 @@ class ApiUtils {
                     //need for interceptors
                     .client(getBasicAuthClient("", "", false))
                     .addConverterFactory(GsonConverterFactory.create(gson!!))
+                    .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     .build()
             }
 
             return retrofit!!
         }
 
-        fun getRetrofitAutorization(email: String, password: String): Retrofit {
+        private fun getRetrofitAutorization(email: String, password: String): Retrofit {
             if (gson == null) {
                 gson = Gson()
             }
 
-            if (retrofit == null) {
-                retrofit = Retrofit.Builder()
-                    .baseUrl(BuildConfig.SERVER_URL)
-                    //need for interceptors
-                    .client(getBasicAuthClient(email, password, true))
-                    .addConverterFactory(GsonConverterFactory.create(gson!!))
-                    .build()
-            }
+            retrofit = Retrofit.Builder()
+                .baseUrl(BuildConfig.SERVER_URL)
+                //need for interceptors
+                .client(getBasicAuthClient(email, password, true))
+                .addConverterFactory(GsonConverterFactory.create(gson!!))
+                //.addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .build()
 
             return retrofit!!
         }
 
-        fun getAutorizationApi(email: String, password: String):AcademyApi{
-            if (api == null){
-                api = getRetrofitAutorization(email, password).create(AcademyApi::class.java)
-            }
+        fun getAutorizationApi(email: String, password: String): AcademyApi {
+            api = getRetrofitAutorization(email, password).create(AcademyApi::class.java)
             return api!!
         }
 
-        fun getApi():AcademyApi{
-            if (api == null){
+        fun getApi(): AcademyApi {
+            if (api == null) {
                 api = getRetrofit().create(AcademyApi::class.java)
             }
             return api!!

@@ -20,6 +20,7 @@ import com.pkononov.elegion.model.Users
 import retrofit2.Call
 import retrofit2.Response
 import java.io.UnsupportedEncodingException
+import kotlin.math.log
 
 
 class AuthFragment : Fragment() {
@@ -72,40 +73,35 @@ class AuthFragment : Fragment() {
     private fun login() {
         if (isEmailValid(etLogin.text) && isPasswordValid(etPassword.text)) {
             val login = etLogin.text.toString()
-            val password =  etPassword.text.toString()
-            ApiUtils.getAutorizationApi(login, password).authorization().enqueue(object : retrofit2.Callback<Users> {
+            val password = etPassword.text.toString()
+            ApiUtils.getAutorizationApi(login, password).authorization()
+                .enqueue(object : retrofit2.Callback<Users> {
 
-                val handler = Handler(activity!!.mainLooper)
+                    val handler = Handler(activity!!.mainLooper)
 
-                override fun onFailure(call: Call<Users>, t: Throwable) {
-                    handler.post { showMessage(R.string.request_error) }
-                }
+                    override fun onFailure(call: Call<Users>, t: Throwable) {
+                        handler.post {
+                            showMessage(t.message.toString())
+                        }
 
-                override fun onResponse(call: Call<Users>, response: Response<Users>) {
-                   handler.post{
-                       if (!response.isSuccessful) {
-                           showMessage(R.string.login_error)
-                       }
-                       else{
-                           try {
-                              /* val user = OldUser(
-                                   response.body()!!.data.email,
-                                   response.body()!!.data.name,
-                                   ""
-                               )
-                              val intent =
-                                   Intent(activity, ProfileActivity::class.java)
-                               intent.putExtra(ProfileActivity.USER_KEY, user)*/
-                               startActivity(Intent(activity, AlbumsActivity::class.java))
-                               activity?.finish()
-                           } catch (e: Exception) {
-                               e.printStackTrace()
-                           }
-                       }
-                   }
-                }
+                    }
 
-            })
+                    override fun onResponse(call: Call<Users>, response: Response<Users>) {
+                        handler.post {
+                            if (!response.isSuccessful) {
+                                showMessage("Код ошибки ${response.code()}, Ошибка ${response.message()}")
+                            } else {
+                                try {
+                                    startActivity(Intent(activity, AlbumsActivity::class.java))
+                                    activity?.finish()
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            }
+                        }
+                    }
+
+                })
 
         } else {
             showMessage(R.string.login_input_error)
@@ -130,12 +126,25 @@ class AuthFragment : Fragment() {
     }
 
     private fun isEmailValid(loginText: Editable): Boolean {
-        return !TextUtils.isEmpty(loginText) &&
-                Patterns.EMAIL_ADDRESS.matcher(loginText).matches()
+        if (TextUtils.isEmpty(loginText)){
+            etLogin.setError("Пустое поле")
+            return false
+        }
+
+        if (!Patterns.EMAIL_ADDRESS.matcher(loginText).matches()){
+            etLogin.setError("Email некорректный")
+            return false
+        }
+
+        return true
     }
 
     private fun isPasswordValid(passwordText: Editable): Boolean {
-        return !TextUtils.isEmpty(passwordText)
+        if (TextUtils.isEmpty(passwordText)){
+            etPassword.setError("Пустое поле")
+        }
+
+        return true
     }
 
     fun getAuthToken(email: String, password: String): String? {

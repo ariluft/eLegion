@@ -13,6 +13,11 @@ import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
 import com.pkononov.elegion.model.OldUser
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.functions.Action
+import io.reactivex.functions.Consumer
+import io.reactivex.schedulers.Schedulers
+import kotlinx.android.synthetic.main.registration_fragment.*
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import retrofit2.Callback
@@ -51,36 +56,22 @@ class RegistrationFragment : Fragment() {
     private val mOnRegestrationClickListener = View.OnClickListener {
 
         if (isInputValid()) {
-            var user = OldUser(
+            val user = OldUser(
                 mLogin.text.toString(),
                 mName.text.toString(),
                 mPassword.text.toString()
             )
 
-            var handler = Handler(activity!!.mainLooper)
-
-
-            ApiUtils.getApi().registration(user).enqueue(object : Callback<Void> {
-
-                override fun onFailure(call: retrofit2.Call<Void>, t: Throwable) {
-                    handler.post { showMessage(R.string.request_error) }
-                }
-
-                override fun onResponse(
-                    call: retrofit2.Call<Void>,
-                    response: retrofit2.Response<Void>
-                ) {
-                    handler.post {
-                        if (response.isSuccessful) {
-                            showMessage(R.string.registration_success)
-                            fragmentManager?.popBackStack()
-                        } else {
-                            //todo детальная обработка ошибок
-                            showMessage(R.string.request_error)
-                        }
-                    }
-                }
-            })
+            ApiUtils.getApi()
+                .registration(user)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    showMessage(R.string.registration_success)
+                    fragmentManager?.popBackStack()
+                }, {
+                    showMessage(R.string.request_error)
+                })
 
         } else {
             showMessage(R.string.login_input_error)
@@ -90,17 +81,52 @@ class RegistrationFragment : Fragment() {
     private fun isInputValid() =
         isEmailValid(email = mLogin.text.toString()) && isPasswordValid() && isNameValid()
 
-    private fun isEmailValid(email: String) =
-        !TextUtils.isEmpty(email) && Patterns.EMAIL_ADDRESS.matcher(email).matches()
+    private fun isEmailValid(email: String): Boolean {
+        if (TextUtils.isEmpty(email)) {
+            etLogin.setError("Пустое поле")
+            return false
+        }
 
-    private fun isPasswordValid() = mPassword.text.toString()
-        .equals(mPasswordAgain.text.toString()) && !TextUtils.isEmpty(mPassword.text.toString())
+        if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            etLogin.setError("Email некорректный")
+            return false
+        }
 
-    private fun isNameValid() =
-        !TextUtils.isEmpty(mName.text.toString())
+        return true
+    }
+
+    private fun isPasswordValid(): Boolean {
+        if (TextUtils.isEmpty(mPassword.text.toString())) {
+            mPassword.setError("Пустое поле")
+            return false
+        }
+
+        if (TextUtils.isEmpty(mPasswordAgain.text.toString())) {
+            mPasswordAgain.setError("Пустое поле")
+            return false
+        }
+
+        if (mPassword.text.toString() != mPasswordAgain.text.toString()) {
+            mPassword.setError("Поле должно соответствовать следуюещму")
+            mPasswordAgain.setError("Поле должно соответствовать предыдущему")
+            return false
+        }
+
+        return true
+    }
+
+    private fun isNameValid(): Boolean {
+        if (TextUtils.isEmpty(mName.text.toString())) {
+            etName.setError("Пустое поле")
+        }
+        return true
+    }
 
     private fun showMessage(@StringRes string: Int) {
         Toast.makeText(activity, string, Toast.LENGTH_LONG).show()
     }
 
+    private fun showMessage(string: String) {
+        Toast.makeText(activity, string, Toast.LENGTH_LONG).show()
+    }
 }
